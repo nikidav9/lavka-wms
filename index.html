@@ -82,6 +82,7 @@ const products=[
 {name:'Йогурт натуральный',sku:'SKU 551903',img:'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=700&q=85',reason:'Повреждена упаковка',complaints:1,status:'Решено',tone:'green',stock:14,order:'№ 248 115',when:'20.09 · 21:16',text:'Крышка была повреждена.',repeat:false}
 ];
 let currentSection='Качество', qualityTab='Обзор', selected=0;
+const sidebarEl=document.getElementById('sidebar'), overlayEl=document.getElementById('mobileOverlay'), pageEl=document.getElementById('page'), modalEl=document.getElementById('modal'), modalBodyEl=document.getElementById('modalBody');
 
 function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
 function navRender(){
@@ -89,15 +90,17 @@ function navRender(){
  document.querySelectorAll('.navItem,.subItem').forEach(el=>el.onclick=()=>{currentSection=el.dataset.section;document.querySelectorAll('.subItem').forEach(x=>x.classList.remove('active'));if(el.classList.contains('subItem'))el.classList.add('active');navRender();render();closeSidebar()});
 }
 function toggleKitchen(){document.getElementById('kitchen').classList.toggle('open')}
-function openSidebar(){sidebar.classList.add('open');mobileOverlay.classList.add('on')}
-function closeSidebar(){sidebar.classList.remove('open');mobileOverlay.classList.remove('on')}
+function openSidebar(){sidebarEl.classList.add('open');overlayEl.classList.add('on')}
+function closeSidebar(){sidebarEl.classList.remove('open');overlayEl.classList.remove('on')}
 function pageHeader(title,sub='ул. Митинская, 36'){
  return '<div class="pageHead"><div class="titleWrap"><span class="back">‹</span><div><h1>'+title+' <span class="work"><span class="dot"></span>Работает</span></h1><div class="storeMeta">'+sub+' · <span style="color:#2f6fe4">Открыть на карте</span></div></div></div><div class="headActions"><button class="selectBtn">▣ 21.09.2026</button><button class="selectBtn">Лавка 312 (Митино) ▾</button></div></div>';
 }
 function qualityTabs(){
  const tabs=['Обзор','Жалобы','Товары','Лавки','Причины','Динамика','Действия'];
- return '<div class="tabs">'+tabs.map(t=>'<div class="tab '+(qualityTab===t?'active':'')+'" onclick="qualityTab=\\''+t+'\\';render()">'+t+'</div>').join('')+'</div>';
+ return '<div class="tabs">'+tabs.map(t=>'<div class="tab '+(qualityTab===t?'active':'')+'" data-tab="'+t+'" onclick="setQualityTab(this.dataset.tab)">'+t+'</div>').join('')+'</div>';
 }
+function setQualityTab(t){qualityTab=t;render()}
+function openProductComplaints(i){selected=i;qualityTab='Жалобы';render()}
 function kpis(){
  return '<div class="kpis">'+[
  ['Всего жалоб','24','+33%','up','к предыдущему периоду'],
@@ -123,7 +126,7 @@ function overview(){
  return kpis()+'<div class="grid2" style="margin-bottom:14px">'+chartPanel()+reasonsPanel()+'</div><div class="grid2">'+complaintsTable()+detailPanel()+'</div>';
 }
 function productsView(){
- return '<div class="panel"><div class="panelHead"><div class="toolbar"><button class="pill on">Все товары</button><button class="pill">С жалобами 11</button><button class="pill">Требуют проверки 4</button><button class="pill">Повторные 5</button></div><input class="miniSearch" placeholder="SKU или товар"></div><div class="tableWrap"><table class="tbl"><thead><tr><th>ТОВАР</th><th>ОСТАТОК</th><th>ЖАЛОБЫ</th><th>ПОСЛЕДНЯЯ ПРИЧИНА</th><th>СТАТУС</th></tr></thead><tbody>'+products.map((p,i)=>'<tr onclick="selected='+i+';qualityTab=\\'Жалобы\\';render()"><td><div class="prod"><img class="pic" src="'+p.img+'"><div><div class="prodName">'+p.name+'</div><div class="small">'+p.sku+'</div></div></div></td><td>'+p.stock+' шт.</td><td>'+p.complaints+'</td><td>'+p.reason+'</td><td><span class="tag '+p.tone+'">'+p.status+'</span></td></tr>').join('')+'</tbody></table></div></div>';
+ return '<div class="panel"><div class="panelHead"><div class="toolbar"><button class="pill on">Все товары</button><button class="pill">С жалобами 11</button><button class="pill">Требуют проверки 4</button><button class="pill">Повторные 5</button></div><input class="miniSearch" placeholder="SKU или товар"></div><div class="tableWrap"><table class="tbl"><thead><tr><th>ТОВАР</th><th>ОСТАТОК</th><th>ЖАЛОБЫ</th><th>ПОСЛЕДНЯЯ ПРИЧИНА</th><th>СТАТУС</th></tr></thead><tbody>'+products.map((p,i)=>'<tr data-i="'+i+'" onclick="openProductComplaints(Number(this.dataset.i))"><td><div class="prod"><img class="pic" src="'+p.img+'"><div><div class="prodName">'+p.name+'</div><div class="small">'+p.sku+'</div></div></div></td><td>'+p.stock+' шт.</td><td>'+p.complaints+'</td><td>'+p.reason+'</td><td><span class="tag '+p.tone+'">'+p.status+'</span></td></tr>').join('')+'</tbody></table></div></div>';
 }
 function storesView(){
  return '<div class="panel"><div class="panelHead"><span class="panelTitle">Лавки</span><span class="small">Текущий пилот</span></div><div class="tableWrap"><table class="tbl"><thead><tr><th>ЛАВКА</th><th>АДРЕС</th><th>ЖАЛОБЫ</th><th>ТРЕБУЮТ ПРОВЕРКИ</th><th>ЗАКРЫТО В СРОК</th></tr></thead><tbody><tr><td><b>Лавка 312 (Митино)</b></td><td>ул. Митинская, 36</td><td>24</td><td>4</td><td><span class="tag green">83%</span></td></tr></tbody></table></div></div>';
@@ -165,16 +168,16 @@ function generic(name){
  const d=genericPages[name]||[name,[['Активно','—'],['Сегодня','—'],['Статус','Работает']],'Раздел WMS'];
  return pageHeader(d[0])+ '<div class="kpis">'+d[1].map((m,i)=>'<div class="card kpi"><div class="kpiLabel">'+m[0]+'</div><div class="kpiValue">'+m[1]+'</div><div class="small">'+(i===2?'текущий статус':'за текущую смену')+'</div></div>').join('')+'<div class="card kpi"><div class="kpiLabel">Лавка</div><div class="kpiValue" style="font-size:19px;margin-top:10px">312</div><div class="small">Митино</div></div></div><div class="panel"><div class="panelHead"><span class="panelTitle">'+d[0]+'</span><div class="toolbar"><button class="pill on">Сегодня</button><button class="pill">Все</button></div></div><div class="panelBody"><h3 style="margin-top:0">'+d[2]+'</h3><div class="tableWrap"><table class="tbl"><thead><tr><th>ОБЪЕКТ</th><th>СТАТУС</th><th>ОБНОВЛЕНО</th><th>ОТВЕТСТВЕННЫЙ</th></tr></thead><tbody><tr><td>Основной поток</td><td><span class="tag green">Работает</span></td><td>Только что</td><td>Директор лавки</td></tr><tr><td>Контрольная задача</td><td><span class="tag amber">В работе</span></td><td>5 минут назад</td><td>Сотрудник смены</td></tr><tr><td>Системная проверка</td><td><span class="tag blue">Запланировано</span></td><td>Сегодня</td><td>WMS</td></tr></tbody></table></div></div></div>';
 }
-function render(){document.getElementById('page').innerHTML=currentSection==='Качество'?quality():generic(currentSection);navRender()}
+function render(){pageEl.innerHTML=currentSection==='Качество'?quality():generic(currentSection);navRender()}
 function openCheck(){
- let p=products[selected];modal.style.display='flex';modalBody.innerHTML='<h2>Проверка товара</h2><div class="prod"><img class="pic" src="'+p.img+'"><div><div class="prodName">'+p.name+'</div><div class="small">'+p.sku+'</div></div></div><div class="comment">'+p.text+'</div><p>Проверьте конкретный товар и выберите результат.</p><div class="choice"><button onclick="good()">С товаром всё в норме</button><button class="danger" onclick="bad()">Товар плохого качества</button></div><button class="secondary full" onclick="closeModal()">Отмена</button>';
+ let p=products[selected];modalEl.style.display='flex';modalBodyEl.innerHTML='<h2>Проверка товара</h2><div class="prod"><img class="pic" src="'+p.img+'"><div><div class="prodName">'+p.name+'</div><div class="small">'+p.sku+'</div></div></div><div class="comment">'+p.text+'</div><p>Проверьте конкретный товар и выберите результат.</p><div class="choice"><button onclick="good()">С товаром всё в норме</button><button class="danger" onclick="bad()">Товар плохого качества</button></div><button class="secondary full" onclick="closeModal()">Отмена</button>';
 }
-function good(){products[selected].status='Решено';products[selected].tone='green';modalBody.innerHTML='<h2>Проверка завершена</h2><p>Товар в норме. Остатки не изменяются, пересчёт не требуется.</p><button class="primary full" onclick="closeModal();render()">Готово</button>'}
-function bad(){let p=products[selected];modalBody.innerHTML='<h2>Сколько единиц плохого качества?</h2><p>'+p.name+' · текущий остаток '+p.stock+' шт.</p><input id="qty" class="qty" type="number" min="1" max="'+p.stock+'" value="1"><button class="primary full" onclick="moveBad()">Продолжить</button><button class="secondary full" onclick="openCheck()">Назад</button>'}
-function moveBad(){let p=products[selected],q=Math.max(1,Math.min(p.stock,Number(document.getElementById('qty').value)||1));modalBody.innerHTML='<h2>Переместите товар</h2><div class="comment">Переместите <b>'+q+' шт.</b> в блок списания по действующему процессу.</div><p>После перемещения подтвердите выполнение.</p><button class="primary full" onclick="finishBad('+q+')">Перемещение выполнено</button>'}
-function finishBad(q){products[selected].stock=Math.max(0,products[selected].stock-q);products[selected].status='Решено';products[selected].tone='green';modalBody.innerHTML='<h2>Готово</h2><p>Результат проверки зафиксирован. '+q+' шт. перемещены в блок списания.</p><button class="primary full" onclick="closeModal();render()">Закрыть</button>'}
-function closeModal(){modal.style.display='none'}
-modal.onclick=e=>{if(e.target===modal)closeModal()};
+function good(){products[selected].status='Решено';products[selected].tone='green';modalBodyEl.innerHTML='<h2>Проверка завершена</h2><p>Товар в норме. Остатки не изменяются, пересчёт не требуется.</p><button class="primary full" onclick="closeModal();render()">Готово</button>'}
+function bad(){let p=products[selected];modalBodyEl.innerHTML='<h2>Сколько единиц плохого качества?</h2><p>'+p.name+' · текущий остаток '+p.stock+' шт.</p><input id="qty" class="qty" type="number" min="1" max="'+p.stock+'" value="1"><button class="primary full" onclick="moveBad()">Продолжить</button><button class="secondary full" onclick="openCheck()">Назад</button>'}
+function moveBad(){let p=products[selected],q=Math.max(1,Math.min(p.stock,Number(document.getElementById('qty').value)||1));modalBodyEl.innerHTML='<h2>Переместите товар</h2><div class="comment">Переместите <b>'+q+' шт.</b> в блок списания по действующему процессу.</div><p>После перемещения подтвердите выполнение.</p><button class="primary full" onclick="finishBad('+q+')">Перемещение выполнено</button>'}
+function finishBad(q){products[selected].stock=Math.max(0,products[selected].stock-q);products[selected].status='Решено';products[selected].tone='green';modalBodyEl.innerHTML='<h2>Готово</h2><p>Результат проверки зафиксирован. '+q+' шт. перемещены в блок списания.</p><button class="primary full" onclick="closeModal();render()">Закрыть</button>'}
+function closeModal(){modalEl.style.display='none'}
+modalEl.onclick=e=>{if(e.target===modalEl)closeModal()};
 render();
 </script>
 </body></html>
