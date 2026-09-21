@@ -91,6 +91,7 @@ let complaintQuery='';
 let productFilter='Все';
 let productQuery='';
 let genericFilter='Сегодня';
+let pickerTimer=null;
 
 const sidebarEl=document.getElementById('sidebar');
 const overlayEl=document.getElementById('mobileOverlay');
@@ -122,7 +123,7 @@ function showModal(title,body,actions){
  modalEl.style.display='flex';
  modalBodyEl.innerHTML='<h2>'+title+'</h2>'+body+(actions||'<button class="primary full" onclick="closeModal()">Закрыть</button>');
 }
-function closeModal(){modalEl.style.display='none'}
+function closeModal(){modalEl.style.display='none';if(pickerTimer){clearInterval(pickerTimer);pickerTimer=null}}
 modalEl.onclick=function(e){if(e.target===modalEl)closeModal()};
 
 function showHelp(){
@@ -229,7 +230,7 @@ function actionsView(){
    var prTone=p.priority==='Срочно'?'red':p.priority==='В работе'?'amber':'blue';
    return '<div class="card actionItem"><div class="actionTop"><div class="prod"><img class="pic" src="'+p.img+'"><div><div class="prodName">'+p.name+'</div><div class="small">'+p.sku+' · '+p.order+'</div></div></div><span class="tag '+prTone+'">'+p.priority+'</span></div><div class="actionMeta"><span class="tag '+p.tone+'">'+p.reason+'</span><span class="tag blue">'+p.complaints+' жалоб'+(p.repeat?' · повтор':'')+'</span><span class="tag '+(p.hold?'red':'blue')+'">'+(p.hold?'Hold только SKU':'Без Hold')+'</span></div><div class="holdNote">'+p.scenario+' · остаток '+p.stock+' шт.</div><div class="actionButtons"><button class="primary" onclick="selected='+i+';openCheck()">Проверить товар</button><button class="secondary" onclick="showComplaint('+i+')">Карточка</button><a class="secondary sourceLink" style="display:inline-flex;align-items:center;text-decoration:none" href="'+p.sourceUrl+'" target="_blank" rel="noopener">Исходная жалоба ↗</a></div></div>';
  }).join('');
- return '<div class="actionsLayout"><div class="panel"><div class="panelHead"><div><div class="panelTitle">Очередь действий</div><div class="small">Сначала критичные и повторные сигналы</div></div><button class="pill on" onclick="setQualityTab(\'Жалобы\')">Открытые 4</button></div><div class="panelBody stack">'+items+'</div></div><div class="panel"><div class="panelHead"><div><div class="panelTitle">Что делает Quality Hub</div><div class="small">После первого клиентского сигнала</div></div></div><div class="panelBody"><div class="systemStep"><span class="stepNo">1</span><div><b>Сигнал почти в real time</b><div class="small">Жалоба приходит из внешнего сервиса в WMS без ручного поиска заказа.</div></div></div><div class="systemStep"><span class="stepNo">2</span><div><b>Карточка уже обогащена</b><div class="small">Заказ, SKU, фото, остаток, причина и история жалоб собраны в одном месте.</div></div></div><div class="systemStep"><span class="stepNo">3</span><div><b>Точечная реакция</b><div class="small">Для критичных случаев Hold ставится только на конкретный SKU; для субъективного качества — визуальная проверка без Hold.</div></div></div><div class="systemStep"><span class="stepNo">4</span><div><b>Следующие заказы проверяются внимательнее</b><div class="small">Активные заказы с таким SKU можно пометить на дополнительную проверку, а сборщику показать краткое предупреждение.</div></div></div><div class="systemStep"><span class="stepNo">5</span><div><b>Результат фиксируется</b><div class="small">Если товар хороший — ничего не меняется. Если плохой — сотрудник указывает количество и перемещает его в блок списания.</div></div></div></div></div></div>';
+ return '<div class="actionsLayout"><div class="panel"><div class="panelHead"><div><div class="panelTitle">Очередь действий</div><div class="small">Сначала критичные и повторные сигналы</div></div><button class="pill on" onclick="setQualityTab(\'Жалобы\')">Открытые 4</button></div><div class="panelBody stack">'+items+'</div></div><div class="panel"><div class="panelHead"><div><div class="panelTitle">Что делает Quality Hub</div><div class="small">После первого клиентского сигнала</div></div></div><div class="panelBody"><div class="systemStep"><span class="stepNo">1</span><div><b>Сигнал почти в real time</b><div class="small">Жалоба приходит из внешнего сервиса в WMS без ручного поиска заказа.</div></div></div><div class="systemStep"><span class="stepNo">2</span><div><b>Карточка уже обогащена</b><div class="small">Заказ, SKU, фото, остаток, причина и история жалоб собраны в одном месте.</div></div></div><div class="systemStep"><span class="stepNo">3</span><div><b>Точечная реакция</b><div class="small">Для критичных случаев Hold ставится только на конкретный SKU; для субъективного качества — визуальная проверка без Hold.</div></div></div><div class="systemStep"><span class="stepNo">4</span><div><b>Следующие заказы проверяются внимательнее</b><div class="small">Активные заказы с таким SKU можно пометить на дополнительную проверку, а сборщику показать краткое предупреждение.</div></div></div><div class="systemStep"><span class="stepNo">5</span><div><b>Результат фиксируется</b><div class="small">Если товар хороший — ничего не меняется. Если плохой — сотрудник указывает количество и перемещает его в блок списания.</div></div></div><button class="secondary full" onclick="showPickerCheck()">Показать экран дополнительной проверки сборщика</button></div></div></div>';
 }
 
 function quality(){
@@ -276,6 +277,24 @@ function generic(name){
 
 function render(){pageEl.innerHTML=currentSection==='Качество'?quality():generic(currentSection);navRender()}
 
+function showPickerCheck(){
+ var p=products[selected]||products[0];
+ if(pickerTimer){clearInterval(pickerTimer);pickerTimer=null}
+ var left=7;
+ modalEl.style.display='flex';
+ modalBodyEl.innerHTML='<h2>Дополнительная проверка</h2><div class="small" style="margin-bottom:12px">Заказ '+p.order+'</div><div class="prod"><img class="pic" src="'+p.img+'"><div><div class="prodName">'+p.name+'</div><div class="small">'+p.sku+'</div></div></div><div class="comment" style="font-size:14px;margin-top:16px"><b>Проверьте дополнительно этот товар — по нему много жалоб</b></div><div id="pickerCountdown" class="kpiValue" style="text-align:center;margin:18px 0 8px">7</div><button id="pickerConfirm" class="primary full" disabled style="opacity:.45;cursor:not-allowed" onclick="confirmPicker()">Подтвердить товар</button>';
+ pickerTimer=setInterval(function(){
+   left-=1;
+   var counter=document.getElementById('pickerCountdown');
+   var btn=document.getElementById('pickerConfirm');
+   if(counter)counter.textContent=left>0?String(left):'✓';
+   if(left<=0){
+     clearInterval(pickerTimer);pickerTimer=null;
+     if(btn){btn.disabled=false;btn.style.opacity='1';btn.style.cursor='pointer'}
+   }
+ },1000);
+}
+function confirmPicker(){closeModal();showModal('Проверка подтверждена','<p>Сборщик подтвердил дополнительную проверку товара и возвращается к обычной сборке.</p>')}
 function openCheck(){
  var p=products[selected];
  modalEl.style.display='flex';
@@ -297,10 +316,9 @@ function moveBad(){
  modalBodyEl.innerHTML='<h2>Переместите товар</h2><div class="comment">Переместите <b>'+q+' шт.</b> в блок списания по действующему процессу.</div><p>После перемещения подтвердите выполнение.</p><button class="primary full" onclick="finishBad('+q+')">Перемещение выполнено</button>';
 }
 function finishBad(q){
- products[selected].stock=Math.max(0,products[selected].stock-q);
  products[selected].status='Решено';
  products[selected].tone='green';
- modalBodyEl.innerHTML='<h2>Готово</h2><p>Результат проверки зафиксирован. '+q+' шт. перемещены в блок списания.</p><button class="primary full" onclick="closeModal();render()">Закрыть</button>';
+ modalBodyEl.innerHTML='<h2>Готово</h2><p>Результат проверки зафиксирован. '+q+' шт. перемещены в блок списания по существующему процессу. Quality Hub отдельно остаток не пересчитывает.</p><button class="primary full" onclick="closeModal();render()">Закрыть</button>';
 }
 
 render();
