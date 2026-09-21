@@ -20,7 +20,7 @@
 .main{grid-column:2;min-width:0}
 .topbar{position:sticky;top:0;z-index:20;height:62px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 24px;gap:16px}
 .menuBtn{display:none;border:0;background:#f1f3f5;width:38px;height:38px;border-radius:9px}.search{max-width:420px;flex:1;position:relative}.search input{width:100%;padding:10px 12px 10px 36px;border:1px solid #dde1e6;background:#f6f7f9;border-radius:9px;outline:none}.search:before{content:"⌕";position:absolute;left:13px;top:7px;color:#7c8590;font-size:21px}
-.topRight{margin-left:auto;display:flex;align-items:center;gap:14px}.role{font-size:12px;color:#6e7782}.user{font-weight:650}.avatar{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#e7ecf5;font-weight:700}.iconBtn{border:0;background:transparent;color:#5f6873;font-size:18px;padding:6px}
+.topRight{margin-left:auto;display:flex;align-items:center;gap:14px}.role{font-size:12px;color:#6e7782}.user{font-weight:650}.avatar{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:#e7ecf5;font-weight:700}.iconBtn{border:0;background:transparent;color:#5f6873;font-size:18px;padding:6px}.linkBtn{border:0;background:transparent;color:#2f6fe4;padding:0;cursor:pointer}.backBtn{border:0;background:transparent;font-size:24px;color:#7b8490;padding:0 4px;cursor:pointer}.clickableCard{cursor:pointer}.clickableCard:hover{border-color:#cbd5e1;box-shadow:0 2px 8px #1f29370d}
 .page{padding:26px 28px 44px;max-width:1680px;margin:auto}.pageHead{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;margin-bottom:18px}.titleWrap{display:flex;gap:12px;align-items:flex-start}.back{font-size:22px;color:#7b8490;margin-top:2px}.page h1{font-size:28px;margin:0 0 3px;letter-spacing:-.3px}.storeMeta{display:flex;gap:10px;align-items:center;color:#6f7883}.work{display:inline-flex;align-items:center;gap:6px;color:#347f58;font-weight:650;font-size:12px}.dot{width:8px;height:8px;border-radius:50%;background:#39a96b}.headActions{display:flex;gap:8px;align-items:center}.selectBtn{background:#fff;border:1px solid #dce1e7;border-radius:8px;padding:9px 11px;color:#3f4650}
 .tabs{display:flex;gap:24px;border-bottom:1px solid #dfe3e7;overflow:auto;margin-bottom:18px}.tab{white-space:nowrap;padding:11px 1px;color:#59616c;cursor:pointer}.tab.active{color:var(--blue);font-weight:650;border-bottom:2px solid var(--blue)}
 .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:14px}.card,.panel{background:#fff;border:1px solid var(--line);border-radius:11px}.kpi{padding:16px 18px;min-height:104px}.kpiLabel{color:#6e7782;font-size:12px}.kpiValue{font-size:28px;font-weight:760;margin:5px 0}.delta{font-size:12px}.up{color:var(--red)}.good{color:var(--green)}
@@ -58,9 +58,9 @@
 <main class="main">
 <header class="topbar">
   <button class="menuBtn" onclick="openSidebar()">☰</button>
-  <div class="search"><input id="globalSearch" placeholder="Поиск в WMS"></div>
+  <div class="search"><input id="globalSearch" placeholder="Поиск в WMS" onkeydown="if(event.key===\'Enter\')globalLookup(this.value)"></div>
   <div class="topRight">
-    <button class="iconBtn">?</button><button class="iconBtn">♢</button>
+    <button class="iconBtn" onclick="showHelp()">?</button><button class="iconBtn" onclick="showNotifications()">♢</button>
     <div><div class="role">Директор лавки</div><div class="user">Маршала Василевского, 17</div></div>
     <div class="avatar">ДН</div>
   </div>
@@ -73,6 +73,7 @@
 const navItems=[
 ['Общая информация','⌂'],['Мой ассортимент','▦'],['Мои сотрудники','♙'],['Области хранения','▤'],['Диспетчерская','◫'],['Диспетчерская 2.0','◩'],['Операции','⇄'],['Оборудование склада','⚙'],['Печать','▣'],['Остатки','≡'],['Аналитика','⌁'],['Качество','◇'],['Здоровье','♡'],['Табло','▥'],['Задания','✓'],['Слоты','◷'],['Таблица слотов','▦'],['Курьеры','⌖'],['ТМЦ','□']
 ];
+
 const products=[
 {name:'Бананы',sku:'SKU 104829',img:'https://images.unsplash.com/photo-1603833665858-e61d17a86224?auto=format&fit=crop&w=700&q=85',reason:'Испорченный продукт',complaints:3,status:'Требует проверки',tone:'red',stock:18,order:'№ 248 391',when:'21.09 · 18:42',text:'Бананы потемневшие, внутри мягкие. Несколько штук пришлось выбросить.',repeat:true},
 {name:'Молоко 3,2%, 930 мл',sku:'SKU 238104',img:'https://images.unsplash.com/photo-1550583724-b2692b85b150?auto=format&fit=crop&w=700&q=85',reason:'Срок годности',complaints:2,status:'Требует проверки',tone:'red',stock:12,order:'№ 248 344',when:'21.09 · 17:11',text:'До окончания срока остался один день.',repeat:true},
@@ -81,66 +82,156 @@ const products=[
 {name:'Огурцы среднеплодные',sku:'SKU 119035',img:'https://images.unsplash.com/photo-1604977042946-1eecc30f269e?auto=format&fit=crop&w=700&q=85',reason:'Качество продукта',complaints:1,status:'Решено',tone:'green',stock:21,order:'№ 248 190',when:'21.09 · 12:08',text:'Огурцы вялые.',repeat:false},
 {name:'Йогурт натуральный',sku:'SKU 551903',img:'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=700&q=85',reason:'Повреждена упаковка',complaints:1,status:'Решено',tone:'green',stock:14,order:'№ 248 115',when:'20.09 · 21:16',text:'Крышка была повреждена.',repeat:false}
 ];
-let currentSection='Качество', qualityTab='Обзор', selected=0;
-const sidebarEl=document.getElementById('sidebar'), overlayEl=document.getElementById('mobileOverlay'), pageEl=document.getElementById('page'), modalEl=document.getElementById('modal'), modalBodyEl=document.getElementById('modalBody');
 
-function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+let currentSection='Качество';
+let qualityTab='Обзор';
+let selected=0;
+let complaintFilter='Все';
+let complaintQuery='';
+let productFilter='Все';
+let productQuery='';
+let genericFilter='Сегодня';
+
+const sidebarEl=document.getElementById('sidebar');
+const overlayEl=document.getElementById('mobileOverlay');
+const pageEl=document.getElementById('page');
+const modalEl=document.getElementById('modal');
+const modalBodyEl=document.getElementById('modalBody');
+
 function navRender(){
- document.getElementById('nav').innerHTML=navItems.map(([n,i])=>'<div class="navItem '+(currentSection===n?'active':'')+'" data-section="'+n+'"><span class="ico">'+i+'</span><span class="navLabel">'+n+'</span></div>').join('');
- document.querySelectorAll('.navItem,.subItem').forEach(el=>el.onclick=()=>{currentSection=el.dataset.section;document.querySelectorAll('.subItem').forEach(x=>x.classList.remove('active'));if(el.classList.contains('subItem'))el.classList.add('active');navRender();render();closeSidebar()});
+ document.getElementById('nav').innerHTML=navItems.map(function(x){
+   var n=x[0],i=x[1];
+   return '<div class="navItem '+(currentSection===n?'active':'')+'" data-section="'+n+'"><span class="ico">'+i+'</span><span class="navLabel">'+n+'</span></div>';
+ }).join('');
+ document.querySelectorAll('.navItem,.subItem').forEach(function(el){
+   el.onclick=function(){
+     currentSection=el.dataset.section;
+     document.querySelectorAll('.subItem').forEach(function(x){x.classList.remove('active')});
+     if(el.classList.contains('subItem'))el.classList.add('active');
+     render();
+     closeSidebar();
+   };
+ });
 }
+
 function toggleKitchen(){document.getElementById('kitchen').classList.toggle('open')}
 function openSidebar(){sidebarEl.classList.add('open');overlayEl.classList.add('on')}
 function closeSidebar(){sidebarEl.classList.remove('open');overlayEl.classList.remove('on')}
-function pageHeader(title,sub='ул. Митинская, 36'){
- return '<div class="pageHead"><div class="titleWrap"><span class="back">‹</span><div><h1>'+title+' <span class="work"><span class="dot"></span>Работает</span></h1><div class="storeMeta">'+sub+' · <span style="color:#2f6fe4">Открыть на карте</span></div></div></div><div class="headActions"><button class="selectBtn">▣ 21.09.2026</button><button class="selectBtn">Лавка 312 (Митино) ▾</button></div></div>';
+
+function showModal(title,body,actions){
+ modalEl.style.display='flex';
+ modalBodyEl.innerHTML='<h2>'+title+'</h2>'+body+(actions||'<button class="primary full" onclick="closeModal()">Закрыть</button>');
 }
-function qualityTabs(){
- const tabs=['Обзор','Жалобы','Товары','Причины','Динамика','Действия'];
- return '<div class="tabs">'+tabs.map(t=>'<div class="tab '+(qualityTab===t?'active':'')+'" data-tab="'+t+'" onclick="setQualityTab(this.dataset.tab)">'+t+'</div>').join('')+'</div>';
+function closeModal(){modalEl.style.display='none'}
+modalEl.onclick=function(e){if(e.target===modalEl)closeModal()};
+
+function showHelp(){
+ showModal('Помощь по WMS','<p>Это интерактивный прототип. Выберите раздел в меню, а внутри «Качества» используйте вкладки, фильтры, строки таблиц и действия по товару.</p>');
 }
+function showNotifications(){
+ showModal('Уведомления','<div class="stack"><div class="card sectionCard"><b>4 товара требуют проверки</b><div class="small">Quality Hub · сейчас</div></div><div class="card sectionCard"><b>2 задания близки к SLA</b><div class="small">Задания · 5 минут назад</div></div></div>');
+}
+function chooseDate(){showModal('Дата','<p>Выбран период: <b>21.09.2026</b>.</p><button class="secondary full" onclick="closeModal()">Оставить дату</button>')}
+function chooseStore(){showModal('Лавка','<p><b>Лавка 312 (Митино)</b><br>ул. Митинская, 36</p><button class="secondary full" onclick="closeModal()">Выбрано</button>')}
+function showMapInfo(){showModal('Лавка 312 (Митино)','<p>ул. Митинская, 36</p><p class="small">В прототипе внешняя карта не открывается — адрес отображается здесь.</p>')}
+function goHome(){currentSection='Общая информация';render()}
+function globalLookup(v){
+ var q=(v||'').trim().toLowerCase();
+ if(!q)return;
+ var nav=navItems.find(function(x){return x[0].toLowerCase().includes(q)});
+ if(nav){currentSection=nav[0];render();return}
+ var idx=products.findIndex(function(p){return (p.name+' '+p.sku+' '+p.order).toLowerCase().includes(q)});
+ if(idx>=0){currentSection='Качество';qualityTab='Жалобы';selected=idx;render();if(window.innerWidth<=1100)showComplaint(idx);return}
+ showModal('Поиск','<p>По запросу <b>'+q.replace(/[<>&]/g,'')+'</b> ничего не найдено.</p>');
+}
+
+function pageHeader(title,sub){
+ sub=sub||'ул. Митинская, 36';
+ return '<div class="pageHead"><div class="titleWrap"><button class="backBtn" onclick="goHome()">‹</button><div><h1>'+title+' <span class="work"><span class="dot"></span>Работает</span></h1><div class="storeMeta">'+sub+' · <button class="linkBtn" onclick="showMapInfo()">Открыть на карте</button></div></div></div><div class="headActions"><button class="selectBtn" onclick="chooseDate()">▣ 21.09.2026</button><button class="selectBtn" onclick="chooseStore()">Лавка 312 (Митино) ▾</button></div></div>';
+}
+
 function setQualityTab(t){qualityTab=t;render()}
-function openProductComplaints(i){selected=i;qualityTab='Жалобы';render()}
+function qualityTabs(){
+ var tabs=['Обзор','Жалобы','Товары','Причины','Динамика','Действия'];
+ return '<div class="tabs">'+tabs.map(function(t){return '<div class="tab '+(qualityTab===t?'active':'')+'" data-tab="'+t+'" onclick="setQualityTab(this.dataset.tab)">'+t+'</div>'}).join('')+'</div>';
+}
+
 function kpis(){
- return '<div class="kpis">'+[
- ['Всего жалоб','24','+33%','up','к предыдущему периоду'],
- ['Товары, требующие проверки','4','+1','up','сегодня'],
- ['Повторные жалобы','5','+3','up','на те же товары'],
- ['Закрыто в срок','83%','+12 п.п.','good','в течение 24 часов']
- ].map(x=>'<div class="card kpi"><div class="kpiLabel">'+x[0]+'</div><div class="kpiValue">'+x[1]+'</div><div class="delta '+x[3]+'">'+x[2]+' <span class="small">'+x[4]+'</span></div></div>').join('')+'</div>';
+ var d=[
+ ['Всего жалоб','24','+33%','up','к предыдущему периоду','Жалобы'],
+ ['Товары, требующие проверки','4','+1','up','сегодня','Товары'],
+ ['Повторные жалобы','5','+3','up','на те же товары','Жалобы'],
+ ['Закрыто в срок','83%','+12 п.п.','good','в течение 24 часов','Динамика']
+ ];
+ return '<div class="kpis">'+d.map(function(x){return '<div class="card kpi clickableCard" onclick="setQualityTab(\''+x[5]+'\')"><div class="kpiLabel">'+x[0]+'</div><div class="kpiValue">'+x[1]+'</div><div class="delta '+x[3]+'">'+x[2]+' <span class="small">'+x[4]+'</span></div></div>'}).join('')+'</div>';
 }
+
 function chartPanel(){
- return '<div class="panel"><div class="panelHead"><span class="panelTitle">Динамика жалоб</span><div class="legend"><span>Все жалобы</span><span>Повторные</span></div></div><div class="panelBody"><div class="chart"><div class="gridLine" style="top:25%"></div><div class="gridLine" style="top:50%"></div><div class="gridLine" style="top:75%"></div><svg viewBox="0 0 700 218" preserveAspectRatio="none"><path d="M0 174 L100 145 L200 160 L300 100 L400 43 L500 118 L600 77 L700 96" fill="none" stroke="#3b78eb" stroke-width="3"/><path d="M0 195 L100 190 L200 184 L300 175 L400 150 L500 169 L600 157 L700 164" fill="none" stroke="#8db0ef" stroke-width="2"/></svg></div><div class="axisLabels"><span>14.09</span><span>15.09</span><span>16.09</span><span>17.09</span><span>18.09</span><span>19.09</span><span>20.09</span><span>21.09</span></div></div></div>';
+ return '<div class="panel"><div class="panelHead"><span class="panelTitle">Динамика жалоб</span><div class="legend"><span>Все жалобы</span><span>Повторные</span></div></div><div class="panelBody"><div class="chart clickableCard" onclick="setQualityTab(\'Динамика\')"><div class="gridLine" style="top:25%"></div><div class="gridLine" style="top:50%"></div><div class="gridLine" style="top:75%"></div><svg viewBox="0 0 700 218" preserveAspectRatio="none"><path d="M0 174 L100 145 L200 160 L300 100 L400 43 L500 118 L600 77 L700 96" fill="none" stroke="#3b78eb" stroke-width="3"/><path d="M0 195 L100 190 L200 184 L300 175 L400 150 L500 169 L600 157 L700 164" fill="none" stroke="#8db0ef" stroke-width="2"/></svg></div><div class="axisLabels"><span>14.09</span><span>15.09</span><span>16.09</span><span>17.09</span><span>18.09</span><span>19.09</span><span>20.09</span><span>21.09</span></div></div></div>';
 }
+
 function reasonsPanel(){
- const rs=[['Испорченный продукт',52,13],['Переспелый / незрелый',17,4],['Срок годности',13,3],['Повреждение упаковки',9,2],['Другое',9,2]];
- return '<div class="panel"><div class="panelHead"><span class="panelTitle">Причины жалоб</span><span class="small">7 дней</span></div><div class="panelBody">'+rs.map(r=>'<div class="reasonRow"><span>'+r[0]+'</span><div class="bar"><i style="width:'+r[1]+'%"></i></div><b>'+r[2]+'</b></div>').join('')+'</div></div>';
+ var rs=[['Испорченный продукт',52,13],['Переспелый / незрелый',17,4],['Срок годности',13,3],['Повреждение упаковки',9,2],['Другое',9,2]];
+ return '<div class="panel"><div class="panelHead"><span class="panelTitle">Причины жалоб</span><button class="linkBtn" onclick="setQualityTab(\'Причины\')">Все причины</button></div><div class="panelBody">'+rs.map(function(r){return '<div class="reasonRow clickableCard" onclick="showReason(\''+r[0].replace(/'/g,'')+'\')"><span>'+r[0]+'</span><div class="bar"><i style="width:'+r[1]+'%"></i></div><b>'+r[2]+'</b></div>'}).join('')+'</div></div>';
+}
+function showReason(reason){showModal('Причина: '+reason,'<p>Показаны обращения этой категории. В рабочей версии здесь будет переход к отфильтрованному списку жалоб.</p>')}
+
+function setComplaintFilter(f){complaintFilter=f;render()}
+function setComplaintQuery(v){complaintQuery=v;render()}
+function filteredComplaints(){
+ var q=complaintQuery.trim().toLowerCase();
+ return products.map(function(p,i){return {p:p,i:i}}).filter(function(x){
+   var p=x.p;
+   var ok=complaintFilter==='Все'||(complaintFilter==='Требуют проверки'&&p.status==='Требует проверки')||(complaintFilter==='Открытые'&&p.status!=='Решено')||(complaintFilter==='Повторные'&&p.repeat);
+   var text=(p.name+' '+p.sku+' '+p.order+' '+p.reason).toLowerCase();
+   return ok&&(!q||text.includes(q));
+ });
 }
 function complaintsTable(){
- return '<div class="panel"><div class="panelHead"><div class="toolbar"><button class="pill on">Все 24</button><button class="pill">Требуют проверки 4</button><button class="pill">Открытые 8</button><button class="pill">Повторные 5</button></div><input class="miniSearch" placeholder="Поиск"></div><div class="tableWrap"><table class="tbl"><thead><tr><th>ДАТА</th><th>ТОВАР</th><th>ЗАКАЗ</th><th>ПРИЧИНА</th><th>ПОВТОР</th><th>СТАТУС</th></tr></thead><tbody>'+products.map((p,i)=>'<tr class="'+(selected===i?'selected':'')+'" onclick="selected='+i+';render()"><td>'+p.when+'</td><td><div class="prod"><img class="pic" src="'+p.img+'"><div><div class="prodName">'+p.name+'</div><div class="small">'+p.sku+'</div></div></div></td><td>'+p.order+'</td><td>'+p.reason+'</td><td>'+(p.repeat?'<span class="tag red">Да</span>':'—')+'</td><td><span class="tag '+p.tone+'">'+p.status+'</span></td></tr>').join('')+'</tbody></table></div></div>';
+ var rows=filteredComplaints();
+ var filters=['Все','Требуют проверки','Открытые','Повторные'];
+ return '<div class="panel"><div class="panelHead"><div class="toolbar">'+filters.map(function(f){return '<button class="pill '+(complaintFilter===f?'on':'')+'" onclick="setComplaintFilter(\''+f+'\')">'+f+'</button>'}).join('')+'</div><input class="miniSearch" value="'+complaintQuery.replace(/"/g,'&quot;')+'" placeholder="Поиск" onkeydown="if(event.key===\'Enter\')setComplaintQuery(this.value)" onblur="setComplaintQuery(this.value)"></div><div class="tableWrap"><table class="tbl"><thead><tr><th>ДАТА</th><th>ТОВАР</th><th>ЗАКАЗ</th><th>ПРИЧИНА</th><th>ПОВТОР</th><th>СТАТУС</th></tr></thead><tbody>'+rows.map(function(x){var p=x.p,i=x.i;return '<tr class="'+(selected===i?'selected':'')+'" data-i="'+i+'" onclick="selectComplaint(Number(this.dataset.i))"><td>'+p.when+'</td><td><div class="prod"><img class="pic" src="'+p.img+'"><div><div class="prodName">'+p.name+'</div><div class="small">'+p.sku+'</div></div></div></td><td>'+p.order+'</td><td>'+p.reason+'</td><td>'+(p.repeat?'<span class="tag red">Да</span>':'—')+'</td><td><span class="tag '+p.tone+'">'+p.status+'</span></td></tr>'}).join('')+(rows.length?'':'<tr><td colspan="6" class="empty">Ничего не найдено</td></tr>')+'</tbody></table></div></div>';
+}
+function selectComplaint(i){selected=i;render();if(window.innerWidth<=1100)showComplaint(i)}
+function showComplaint(i){
+ selected=i;
+ var p=products[i];
+ showModal('Жалоба '+p.order,'<div class="prod"><img class="pic" src="'+p.img+'"><div><div class="prodName">'+p.name+'</div><div class="small">'+p.sku+'</div></div></div><div class="kv"><span>Причина</span><b>'+p.reason+'</b></div><div class="kv"><span>Статус</span><span class="tag '+p.tone+'">'+p.status+'</span></div><div class="comment"><b>Комментарий покупателя</b><br>'+p.text+'</div>','<button class="primary full" onclick="openCheck()">Проверить товар</button><button class="secondary full" onclick="closeModal()">Закрыть</button>');
 }
 function detailPanel(){
- let p=products[selected];return '<div class="panel detailPanel"><div class="detail"><img class="hero" src="'+p.img+'"><h2>'+p.name+'</h2><div class="small">'+p.sku+'</div><div class="kv"><span>Заказ</span><b>'+p.order+'</b></div><div class="kv"><span>Причина</span><b>'+p.reason+'</b></div><div class="kv"><span>Остаток</span><b>'+p.stock+' шт.</b></div><div class="comment"><b>Комментарий покупателя</b><br>'+p.text+'</div><button class="primary full" onclick="openCheck()">Проверить товар</button><button class="secondary full">Открыть жалобу</button></div></div>';
+ var p=products[selected];
+ return '<div class="panel detailPanel"><div class="detail"><img class="hero clickableCard" onclick="showComplaint('+selected+')" src="'+p.img+'"><h2>'+p.name+'</h2><div class="small">'+p.sku+'</div><div class="kv"><span>Заказ</span><b>'+p.order+'</b></div><div class="kv"><span>Причина</span><b>'+p.reason+'</b></div><div class="kv"><span>Остаток</span><b>'+p.stock+' шт.</b></div><div class="comment"><b>Комментарий покупателя</b><br>'+p.text+'</div><button class="primary full" onclick="openCheck()">Проверить товар</button><button class="secondary full" onclick="showComplaint('+selected+')">Открыть жалобу</button></div></div>';
 }
-function overview(){
- return kpis()+'<div class="grid2" style="margin-bottom:14px">'+chartPanel()+reasonsPanel()+'</div><div class="grid2">'+complaintsTable()+detailPanel()+'</div>';
+function overview(){return kpis()+'<div class="grid2" style="margin-bottom:14px">'+chartPanel()+reasonsPanel()+'</div><div class="grid2">'+complaintsTable()+detailPanel()+'</div>'}
+
+function setProductFilter(f){productFilter=f;render()}
+function setProductQuery(v){productQuery=v;render()}
+function filteredProducts(){
+ var q=productQuery.trim().toLowerCase();
+ return products.map(function(p,i){return {p:p,i:i}}).filter(function(x){
+   var p=x.p;
+   var ok=productFilter==='Все'||(productFilter==='С жалобами'&&p.complaints>0)||(productFilter==='Требуют проверки'&&p.status==='Требует проверки')||(productFilter==='Повторные'&&p.repeat);
+   return ok&&(!q||(p.name+' '+p.sku).toLowerCase().includes(q));
+ });
 }
+function openProductComplaints(i){selected=i;qualityTab='Жалобы';render();if(window.innerWidth<=1100)showComplaint(i)}
 function productsView(){
- return '<div class="panel"><div class="panelHead"><div class="toolbar"><button class="pill on">Все товары</button><button class="pill">С жалобами 11</button><button class="pill">Требуют проверки 4</button><button class="pill">Повторные 5</button></div><input class="miniSearch" placeholder="SKU или товар"></div><div class="tableWrap"><table class="tbl"><thead><tr><th>ТОВАР</th><th>ОСТАТОК</th><th>ЖАЛОБЫ</th><th>ПОСЛЕДНЯЯ ПРИЧИНА</th><th>СТАТУС</th></tr></thead><tbody>'+products.map((p,i)=>'<tr data-i="'+i+'" onclick="openProductComplaints(Number(this.dataset.i))"><td><div class="prod"><img class="pic" src="'+p.img+'"><div><div class="prodName">'+p.name+'</div><div class="small">'+p.sku+'</div></div></div></td><td>'+p.stock+' шт.</td><td>'+p.complaints+'</td><td>'+p.reason+'</td><td><span class="tag '+p.tone+'">'+p.status+'</span></td></tr>').join('')+'</tbody></table></div></div>';
+ var rows=filteredProducts(), filters=['Все','С жалобами','Требуют проверки','Повторные'];
+ return '<div class="panel"><div class="panelHead"><div class="toolbar">'+filters.map(function(f){return '<button class="pill '+(productFilter===f?'on':'')+'" onclick="setProductFilter(\''+f+'\')">'+f+'</button>'}).join('')+'</div><input class="miniSearch" value="'+productQuery.replace(/"/g,'&quot;')+'" placeholder="SKU или товар" onkeydown="if(event.key===\'Enter\')setProductQuery(this.value)" onblur="setProductQuery(this.value)"></div><div class="tableWrap"><table class="tbl"><thead><tr><th>ТОВАР</th><th>ОСТАТОК</th><th>ЖАЛОБЫ</th><th>ПОСЛЕДНЯЯ ПРИЧИНА</th><th>СТАТУС</th></tr></thead><tbody>'+rows.map(function(x){var p=x.p,i=x.i;return '<tr data-i="'+i+'" onclick="openProductComplaints(Number(this.dataset.i))"><td><div class="prod"><img class="pic" src="'+p.img+'"><div><div class="prodName">'+p.name+'</div><div class="small">'+p.sku+'</div></div></div></td><td>'+p.stock+' шт.</td><td>'+p.complaints+'</td><td>'+p.reason+'</td><td><span class="tag '+p.tone+'">'+p.status+'</span></td></tr>'}).join('')+'</tbody></table></div></div>';
 }
-function storesView(){
- return '<div class="panel"><div class="panelHead"><span class="panelTitle">Лавки</span><span class="small">Текущий пилот</span></div><div class="tableWrap"><table class="tbl"><thead><tr><th>ЛАВКА</th><th>АДРЕС</th><th>ЖАЛОБЫ</th><th>ТРЕБУЮТ ПРОВЕРКИ</th><th>ЗАКРЫТО В СРОК</th></tr></thead><tbody><tr><td><b>Лавка 312 (Митино)</b></td><td>ул. Митинская, 36</td><td>24</td><td>4</td><td><span class="tag green">83%</span></td></tr></tbody></table></div></div>';
-}
-function reasonsView(){return '<div class="grid2">'+reasonsPanel()+'<div class="panel"><div class="panelHead"><span class="panelTitle">Что требует реакции</span></div><div class="panelBody stack"><div class="sectionCard card"><h3>Критичные причины</h3><p>Испорченный продукт и срок годности переводят конкретный SKU в сценарий срочной проверки.</p></div><div class="sectionCard card"><h3>Субъективные причины</h3><p>Для зрелости и внешнего вида сотрудник выполняет визуальную проверку без автоматической блокировки категории.</p></div></div></div></div>'}
-function dynamicsView(){return kpis()+'<div class="grid2">'+chartPanel()+'<div class="panel"><div class="panelHead"><span class="panelTitle">Повторные жалобы</span></div><div class="panelBody"><div class="metricRow"><div class="metricMini"><span class="small">Сегодня</span><b>5</b></div><div class="metricMini"><span class="small">За 7 дней</span><b>17</b></div><div class="metricMini"><span class="small">Доля</span><b>16%</b></div></div><p class="small" style="margin-top:14px">Демо-метрики для визуализации сценария. Рабочая аналитика подключается к данным WMS.</p></div></div></div>'}
+
+function reasonsView(){return '<div class="grid2">'+reasonsPanel()+'<div class="panel"><div class="panelHead"><span class="panelTitle">Что требует реакции</span></div><div class="panelBody stack"><div class="sectionCard card clickableCard" onclick="showReason(\'Критичные причины\')"><h3>Критичные причины</h3><p>Испорченный продукт и срок годности переводят конкретный SKU в сценарий срочной проверки.</p></div><div class="sectionCard card clickableCard" onclick="showReason(\'Субъективные причины\')"><h3>Субъективные причины</h3><p>Для зрелости и внешнего вида сотрудник выполняет визуальную проверку без автоматической блокировки категории.</p></div></div></div></div>'}
+function dynamicsView(){return kpis()+'<div class="grid2">'+chartPanel()+'<div class="panel"><div class="panelHead"><span class="panelTitle">Повторные жалобы</span></div><div class="panelBody"><div class="metricRow"><div class="metricMini clickableCard" onclick="setQualityTab(\'Жалобы\')"><span class="small">Сегодня</span><b>5</b></div><div class="metricMini clickableCard" onclick="setQualityTab(\'Жалобы\')"><span class="small">За 7 дней</span><b>17</b></div><div class="metricMini clickableCard" onclick="setComplaintFilter(\'Повторные\');setQualityTab(\'Жалобы\')"><span class="small">Доля</span><b>16%</b></div></div><p class="small" style="margin-top:14px">Демо-метрики для визуализации сценария. Рабочая аналитика подключается к данным WMS.</p></div></div></div>'}
 function actionsView(){
- const tasks=[['Бананы','Проверить товар','3 жалобы · повтор'],['Молоко 3,2%','Проверить срок годности','2 жалобы · повтор'],['Филе куриное','Завершить проверку','В работе'],['Томаты розовые','Визуально проверить','Новая жалоба']];
- return '<div class="panel"><div class="panelHead"><span class="panelTitle">Действия</span><button class="pill on">Открытые 4</button></div><div class="panelBody stack">'+tasks.map((t,i)=>'<div class="card sectionCard" style="display:flex;justify-content:space-between;gap:12px;align-items:center"><div><b>'+t[0]+'</b><div class="small">'+t[2]+'</div></div><button class="primary" onclick="selected='+Math.min(i,products.length-1)+';openCheck()">'+t[1]+'</button></div>').join('')+'</div></div>';
+ var tasks=[['Бананы','Проверить товар','3 жалобы · повтор'],['Молоко 3,2%','Проверить срок годности','2 жалобы · повтор'],['Филе куриное','Завершить проверку','В работе'],['Томаты розовые','Визуально проверить','Новая жалоба']];
+ return '<div class="panel"><div class="panelHead"><span class="panelTitle">Действия</span><button class="pill on" onclick="setQualityTab(\'Жалобы\')">Открытые 4</button></div><div class="panelBody stack">'+tasks.map(function(t,i){return '<div class="card sectionCard clickableCard" onclick="showComplaint('+Math.min(i,products.length-1)+')" style="display:flex;justify-content:space-between;gap:12px;align-items:center"><div><b>'+t[0]+'</b><div class="small">'+t[2]+'</div></div><button class="primary" onclick="event.stopPropagation();selected='+Math.min(i,products.length-1)+';openCheck()">'+t[1]+'</button></div>'}).join('')+'</div></div>';
 }
+
 function quality(){
- let body=qualityTab==='Обзор'?overview():qualityTab==='Жалобы'?'<div class="grid2">'+complaintsTable()+detailPanel()+'</div>':qualityTab==='Товары'?productsView():qualityTab==='Причины'?reasonsView():qualityTab==='Динамика'?dynamicsView():actionsView();
+ var body=qualityTab==='Обзор'?overview():qualityTab==='Жалобы'?'<div class="grid2">'+complaintsTable()+detailPanel()+'</div>':qualityTab==='Товары'?productsView():qualityTab==='Причины'?reasonsView():qualityTab==='Динамика'?dynamicsView():actionsView();
  return pageHeader('Качество')+qualityTabs()+body;
 }
+
 const genericPages={
 'Общая информация':['Состояние лавки',[['Заказы в работе','18'],['Сборщики онлайн','7'],['Курьеры на линии','12']],'Операционные показатели за текущую смену'],
 'Мой ассортимент':['Мой ассортимент',[['Активных SKU','1 842'],['Нет в наличии','37'],['Ограничено','12']],'Ассортимент, доступность и статусы товаров'],
@@ -164,20 +255,49 @@ const genericPages={
 'Меню':['Меню',[['Активных блюд','76'],['Недоступно','8'],['Стоп-лист','5']],'Меню кухни и доступность'],
 'Управление':['Управление кухней',[['Станций','6'],['Активно','6'],['Предупреждений','1']],'Настройки и операционное управление']
 };
+
+function setGenericFilter(f){genericFilter=f;render()}
+function showGenericMetric(title,value){showModal(title,'<p>Текущее значение: <b>'+value+'</b>.</p><p class="small">Демо-данные интерактивного прототипа.</p>')}
+function showGenericItem(name,status){showModal(name,'<div class="kv"><span>Статус</span><b>'+status+'</b></div><div class="kv"><span>Обновлено</span><b>Только что</b></div><div class="kv"><span>Ответственный</span><b>Директор лавки</b></div>')}
+
 function generic(name){
- const d=genericPages[name]||[name,[['Активно','—'],['Сегодня','—'],['Статус','Работает']],'Раздел WMS'];
- return pageHeader(d[0])+ '<div class="kpis">'+d[1].map((m,i)=>'<div class="card kpi"><div class="kpiLabel">'+m[0]+'</div><div class="kpiValue">'+m[1]+'</div><div class="small">'+(i===2?'текущий статус':'за текущую смену')+'</div></div>').join('')+'<div class="card kpi"><div class="kpiLabel">Лавка</div><div class="kpiValue" style="font-size:19px;margin-top:10px">312</div><div class="small">Митино</div></div></div><div class="panel"><div class="panelHead"><span class="panelTitle">'+d[0]+'</span><div class="toolbar"><button class="pill on">Сегодня</button><button class="pill">Все</button></div></div><div class="panelBody"><h3 style="margin-top:0">'+d[2]+'</h3><div class="tableWrap"><table class="tbl"><thead><tr><th>ОБЪЕКТ</th><th>СТАТУС</th><th>ОБНОВЛЕНО</th><th>ОТВЕТСТВЕННЫЙ</th></tr></thead><tbody><tr><td>Основной поток</td><td><span class="tag green">Работает</span></td><td>Только что</td><td>Директор лавки</td></tr><tr><td>Контрольная задача</td><td><span class="tag amber">В работе</span></td><td>5 минут назад</td><td>Сотрудник смены</td></tr><tr><td>Системная проверка</td><td><span class="tag blue">Запланировано</span></td><td>Сегодня</td><td>WMS</td></tr></tbody></table></div></div></div>';
+ var d=genericPages[name]||[name,[['Активно','—'],['Сегодня','—'],['Статус','Работает']],'Раздел WMS'];
+ var metrics=d[1].map(function(m,i){return '<div class="card kpi clickableCard" onclick="showGenericMetric(\''+m[0].replace(/'/g,'')+'\',\''+m[1].replace(/'/g,'')+'\')"><div class="kpiLabel">'+m[0]+'</div><div class="kpiValue">'+m[1]+'</div><div class="small">'+(i===2?'текущий статус':'за текущую смену')+'</div></div>'}).join('');
+ var rows=genericFilter==='Сегодня'?
+ [['Основной поток','Работает','Только что','Директор лавки'],['Контрольная задача','В работе','5 минут назад','Сотрудник смены'],['Системная проверка','Запланировано','Сегодня','WMS']]:
+ [['Основной поток','Работает','Только что','Директор лавки'],['Контрольная задача','В работе','5 минут назад','Сотрудник смены'],['Системная проверка','Запланировано','Сегодня','WMS'],['Архивная задача','Завершено','Вчера','Сотрудник смены']];
+ return pageHeader(d[0])+'<div class="kpis">'+metrics+'<div class="card kpi clickableCard" onclick="chooseStore()"><div class="kpiLabel">Лавка</div><div class="kpiValue" style="font-size:19px;margin-top:10px">312</div><div class="small">Митино</div></div></div><div class="panel"><div class="panelHead"><span class="panelTitle">'+d[0]+'</span><div class="toolbar"><button class="pill '+(genericFilter==='Сегодня'?'on':'')+'" onclick="setGenericFilter(\'Сегодня\')">Сегодня</button><button class="pill '+(genericFilter==='Все'?'on':'')+'" onclick="setGenericFilter(\'Все\')">Все</button></div></div><div class="panelBody"><h3 style="margin-top:0">'+d[2]+'</h3><div class="tableWrap"><table class="tbl"><thead><tr><th>ОБЪЕКТ</th><th>СТАТУС</th><th>ОБНОВЛЕНО</th><th>ОТВЕТСТВЕННЫЙ</th></tr></thead><tbody>'+rows.map(function(r){var tone=r[1]==='Работает'||r[1]==='Завершено'?'green':r[1]==='В работе'?'amber':'blue';return '<tr onclick="showGenericItem(\''+r[0]+'\',\''+r[1]+'\')"><td>'+r[0]+'</td><td><span class="tag '+tone+'">'+r[1]+'</span></td><td>'+r[2]+'</td><td>'+r[3]+'</td></tr>'}).join('')+'</tbody></table></div></div></div>';
 }
+
 function render(){pageEl.innerHTML=currentSection==='Качество'?quality():generic(currentSection);navRender()}
+
 function openCheck(){
- let p=products[selected];modalEl.style.display='flex';modalBodyEl.innerHTML='<h2>Проверка товара</h2><div class="prod"><img class="pic" src="'+p.img+'"><div><div class="prodName">'+p.name+'</div><div class="small">'+p.sku+'</div></div></div><div class="comment">'+p.text+'</div><p>Проверьте конкретный товар и выберите результат.</p><div class="choice"><button onclick="good()">С товаром всё в норме</button><button class="danger" onclick="bad()">Товар плохого качества</button></div><button class="secondary full" onclick="closeModal()">Отмена</button>';
+ var p=products[selected];
+ modalEl.style.display='flex';
+ modalBodyEl.innerHTML='<h2>Проверка товара</h2><div class="prod"><img class="pic" src="'+p.img+'"><div><div class="prodName">'+p.name+'</div><div class="small">'+p.sku+'</div></div></div><div class="comment">'+p.text+'</div><p>Проверьте конкретный товар и выберите результат.</p><div class="choice"><button onclick="good()">С товаром всё в норме</button><button class="danger" onclick="bad()">Товар плохого качества</button></div><button class="secondary full" onclick="closeModal()">Отмена</button>';
 }
-function good(){products[selected].status='Решено';products[selected].tone='green';modalBodyEl.innerHTML='<h2>Проверка завершена</h2><p>Товар в норме. Остатки не изменяются, пересчёт не требуется.</p><button class="primary full" onclick="closeModal();render()">Готово</button>'}
-function bad(){let p=products[selected];modalBodyEl.innerHTML='<h2>Сколько единиц плохого качества?</h2><p>'+p.name+' · текущий остаток '+p.stock+' шт.</p><input id="qty" class="qty" type="number" min="1" max="'+p.stock+'" value="1"><button class="primary full" onclick="moveBad()">Продолжить</button><button class="secondary full" onclick="openCheck()">Назад</button>'}
-function moveBad(){let p=products[selected],q=Math.max(1,Math.min(p.stock,Number(document.getElementById('qty').value)||1));modalBodyEl.innerHTML='<h2>Переместите товар</h2><div class="comment">Переместите <b>'+q+' шт.</b> в блок списания по действующему процессу.</div><p>После перемещения подтвердите выполнение.</p><button class="primary full" onclick="finishBad('+q+')">Перемещение выполнено</button>'}
-function finishBad(q){products[selected].stock=Math.max(0,products[selected].stock-q);products[selected].status='Решено';products[selected].tone='green';modalBodyEl.innerHTML='<h2>Готово</h2><p>Результат проверки зафиксирован. '+q+' шт. перемещены в блок списания.</p><button class="primary full" onclick="closeModal();render()">Закрыть</button>'}
-function closeModal(){modalEl.style.display='none'}
-modalEl.onclick=e=>{if(e.target===modalEl)closeModal()};
+function good(){
+ products[selected].status='Решено';
+ products[selected].tone='green';
+ modalBodyEl.innerHTML='<h2>Проверка завершена</h2><p>Товар в норме. Остатки не изменяются, пересчёт не требуется.</p><button class="primary full" onclick="closeModal();render()">Готово</button>';
+}
+function bad(){
+ var p=products[selected];
+ modalBodyEl.innerHTML='<h2>Сколько единиц плохого качества?</h2><p>'+p.name+' · текущий остаток '+p.stock+' шт.</p><input id="qty" class="qty" type="number" min="1" max="'+p.stock+'" value="1"><button class="primary full" onclick="moveBad()">Продолжить</button><button class="secondary full" onclick="openCheck()">Назад</button>';
+}
+function moveBad(){
+ var p=products[selected];
+ var input=document.getElementById('qty');
+ var q=Math.max(1,Math.min(p.stock,Number(input.value)||1));
+ modalBodyEl.innerHTML='<h2>Переместите товар</h2><div class="comment">Переместите <b>'+q+' шт.</b> в блок списания по действующему процессу.</div><p>После перемещения подтвердите выполнение.</p><button class="primary full" onclick="finishBad('+q+')">Перемещение выполнено</button>';
+}
+function finishBad(q){
+ products[selected].stock=Math.max(0,products[selected].stock-q);
+ products[selected].status='Решено';
+ products[selected].tone='green';
+ modalBodyEl.innerHTML='<h2>Готово</h2><p>Результат проверки зафиксирован. '+q+' шт. перемещены в блок списания.</p><button class="primary full" onclick="closeModal();render()">Закрыть</button>';
+}
+
 render();
 </script>
 </body></html>
