@@ -96,7 +96,7 @@ function pageHeader(title,sub='ул. Митинская, 36'){
  return '<div class="pageHead"><div class="titleWrap"><span class="back">‹</span><div><h1>'+title+' <span class="work"><span class="dot"></span>Работает</span></h1><div class="storeMeta">'+sub+' · <span style="color:#2f6fe4">Открыть на карте</span></div></div></div><div class="headActions"><button class="selectBtn">▣ 21.09.2026</button><button class="selectBtn">Лавка 312 (Митино) ▾</button></div></div>';
 }
 function qualityTabs(){
- const tabs=['Обзор','Жалобы','Товары','Лавки','Причины','Динамика','Действия'];
+ const tabs=['Обзор','Жалобы','Товары','Причины','Динамика','Действия'];
  return '<div class="tabs">'+tabs.map(t=>'<div class="tab '+(qualityTab===t?'active':'')+'" data-tab="'+t+'" onclick="setQualityTab(this.dataset.tab)">'+t+'</div>').join('')+'</div>';
 }
 function setQualityTab(t){qualityTab=t;render()}
@@ -138,7 +138,7 @@ function actionsView(){
  return '<div class="panel"><div class="panelHead"><span class="panelTitle">Действия</span><button class="pill on">Открытые 4</button></div><div class="panelBody stack">'+tasks.map((t,i)=>'<div class="card sectionCard" style="display:flex;justify-content:space-between;gap:12px;align-items:center"><div><b>'+t[0]+'</b><div class="small">'+t[2]+'</div></div><button class="primary" onclick="selected='+Math.min(i,products.length-1)+';openCheck()">'+t[1]+'</button></div>').join('')+'</div></div>';
 }
 function quality(){
- let body=qualityTab==='Обзор'?overview():qualityTab==='Жалобы'?'<div class="grid2">'+complaintsTable()+detailPanel()+'</div>':qualityTab==='Товары'?productsView():qualityTab==='Лавки'?storesView():qualityTab==='Причины'?reasonsView():qualityTab==='Динамика'?dynamicsView():actionsView();
+ let body=qualityTab==='Обзор'?overview():qualityTab==='Жалобы'?'<div class="grid2">'+complaintsTable()+detailPanel()+'</div>':qualityTab==='Товары'?productsView():qualityTab==='Причины'?reasonsView():qualityTab==='Динамика'?dynamicsView():actionsView();
  return pageHeader('Качество')+qualityTabs()+body;
 }
 const genericPages={
