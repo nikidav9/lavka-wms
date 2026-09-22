@@ -59,6 +59,9 @@
 </main>
 </div>
 <div class="modalBg" id="modal"><div class="modal" id="modalBody"></div></div>
+<div class="drawerBg" id="complaintDrawerBg" onclick="if(event.target===this)closeComplaintDrawer()">
+  <aside class="drawer" id="complaintDrawer"></aside>
+</div>
 <script>
 const navItems=[
 ['Общая информация','⌂'],['Мой ассортимент','▦'],['Мои сотрудники','♙'],['Области хранения','▤'],['Диспетчерская','◫'],['Диспетчерская 2.0','◩'],['Операции','⇄'],['Оборудование склада','⚙'],['Печать','▣'],['Остатки','≡'],['Аналитика','⌁'],['Качество','◇'],['Здоровье','♡'],['Табло','▥'],['Задания','✓'],['Слоты','◷'],['Таблица слотов','▦'],['Курьеры','⌖'],['ТМЦ','□']
@@ -88,6 +91,8 @@ const overlayEl=document.getElementById('mobileOverlay');
 const pageEl=document.getElementById('page');
 const modalEl=document.getElementById('modal');
 const modalBodyEl=document.getElementById('modalBody');
+const complaintDrawerBg=document.getElementById('complaintDrawerBg');
+const complaintDrawer=document.getElementById('complaintDrawer');
 
 function navRender(){
  var groups=[
@@ -183,7 +188,7 @@ function filteredComplaints(){
 function complaintsTable(){
  var rows=filteredComplaints();
  var filters=['Все','Требуют проверки','Открытые','Повторные'];
- return '<div class="panel"><div class="panelHead"><div class="toolbar">'+filters.map(function(f){return '<button class="pill '+(complaintFilter===f?'on':'')+'" onclick="setComplaintFilter(\''+f+'\')">'+f+'</button>'}).join('')+'</div><input class="miniSearch" value="'+complaintQuery.replace(/"/g,'&quot;')+'" placeholder="Поиск" onkeydown="if(event.key===\'Enter\')setComplaintQuery(this.value)" onblur="setComplaintQuery(this.value)"></div><div class="tableWrap"><table class="tbl"><thead><tr><th>ДАТА</th><th>ТОВАР</th><th>ЗАКАЗ</th><th>ПРИЧИНА</th><th>ИСТОЧНИК</th><th>ПОВТОР</th><th>СТАТУС</th></tr></thead><tbody>'+rows.map(function(x){var p=x.p,i=x.i;return '<tr class="'+(selected===i?'selected':'')+'" data-i="'+i+'" onclick="selectComplaint(Number(this.dataset.i))"><td>'+p.when+'</td><td><div class="prod"><img class="pic" src="'+p.img+'"><div><div class="prodName">'+p.name+'</div><div class="small">'+p.sku+'</div></div></div></td><td>'+p.order+'</td><td>'+p.reason+'</td><td><a class="sourceLink" href="'+p.sourceUrl+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">'+p.sourceId+' ↗</a></td><td>'+(p.repeat?'<span class="tag red">Да</span>':'—')+'</td><td><span class="tag '+p.tone+'">'+p.status+'</span></td></tr>'}).join('')+(rows.length?'':'<tr><td colspan="7" class="empty">Ничего не найдено</td></tr>')+'</tbody></table></div></div>';
+ return '<div class="panel complaintsPanel"><div class="complaintsTop"><div class="complaintsTopLeft"><div><div class="complaintsTitle">Жалобы по качеству</div><div class="complaintsCount">'+rows.length+' обращений в текущем фильтре</div></div><div class="toolbar">'+filters.map(function(f){return '<button class="pill '+(complaintFilter===f?'on':'')+'" onclick="setComplaintFilter(\''+f+'\')">'+f+'</button>'}).join('')+'</div></div><div class="complaintsControls"><input class="complaintsSearch" value="'+complaintQuery.replace(/"/g,'&quot;')+'" placeholder="Найти товар, SKU или заказ" onkeydown="if(event.key===\'Enter\')setComplaintQuery(this.value)" onblur="setComplaintQuery(this.value)"></div></div><div class="tableWrap"><table class="complaintTable"><colgroup><col style="width:110px"><col style="width:28%"><col style="width:23%"><col style="width:170px"><col style="width:150px"><col style="width:92px"></colgroup><thead><tr><th>ДАТА / ВРЕМЯ</th><th>ТОВАР</th><th>ПРИЧИНА</th><th>ИСТОЧНИК</th><th>СТАТУС</th><th></th></tr></thead><tbody>'+rows.map(function(x){var p=x.p,i=x.i;return '<tr class="'+(selected===i?'selected':'')+'" data-i="'+i+'" onclick="selectComplaint(Number(this.dataset.i))"><td class="cellTime">'+p.when.replace(' · ','<br>')+'</td><td class="cellProduct"><div class="prodName">'+p.name+'</div><div class="compactMeta"><span>'+p.sku+'</span><span class="dotSep">•</span><span>'+p.order+'</span>'+(p.repeat?'<span class="tag red">повтор</span>':'')+'</div></td><td class="cellReason">'+p.reason+'<div class="small" style="margin-top:3px">'+p.scenario+'</div></td><td class="cellSource"><a class="sourceLink" href="'+p.sourceUrl+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">'+p.sourceId+' ↗</a></td><td class="cellStatus"><span class="tag '+p.tone+'">'+p.status+'</span></td><td class="cellOpen"><button class="rowOpenBtn" onclick="event.stopPropagation();selectComplaint('+i+')">Открыть</button></td></tr>'}).join('')+(rows.length?'':'<tr><td colspan="6" class="empty">Ничего не найдено</td></tr>')+'</tbody></table></div></div>';
 }
 function selectComplaint(i){selected=i;render();if(window.innerWidth<=1100)showComplaint(i)}
 function showComplaint(i){
@@ -230,7 +235,7 @@ function actionsView(){
 }
 
 function quality(){
- var body=qualityTab==='Обзор'?overview():qualityTab==='Жалобы'?'<div class="grid2">'+complaintsTable()+detailPanel()+'</div>':qualityTab==='Товары'?productsView():qualityTab==='Причины'?reasonsView():qualityTab==='Динамика'?dynamicsView():actionsView();
+ var body=qualityTab==='Обзор'?overview():qualityTab==='Жалобы'?complaintsTable():qualityTab==='Товары'?productsView():qualityTab==='Причины'?reasonsView():qualityTab==='Динамика'?dynamicsView():actionsView();
  return pageHeader('Качество','Жалобы покупателей, проверка конкретных SKU и профилактика повторов')+qualityTabs()+body;
 }
 
@@ -317,6 +322,9 @@ function finishBad(q){
  modalBodyEl.innerHTML='<h2>Готово</h2><p>Результат проверки зафиксирован. '+q+' шт. перемещены в блок списания по существующему процессу. Quality Hub отдельно остаток не пересчитывает.</p><button class="primary full" onclick="closeModal();render()">Закрыть</button>';
 }
 
+document.addEventListener('keydown',function(e){
+ if(e.key==='Escape'){closeComplaintDrawer();closeModal();closeSidebar()}
+});
 render();
 </script>
 </body></html>
