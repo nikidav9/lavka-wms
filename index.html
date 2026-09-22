@@ -137,6 +137,7 @@ const products=[
 
 let tab='Обзор',complaintFilter='Все',complaintReason='Все причины',complaintQuery='',productFilter='Все',productQuery='',selected=0;
 const page=document.getElementById('page'),drawerBg=document.getElementById('drawerBg'),drawer=document.getElementById('drawer'),modal=document.getElementById('modal'),modalBody=document.getElementById('modalBody');
+let currentDrawerItem=null;
 
 function tabs(){
  const arr=['Обзор','Жалобы','Причины','Действия','Товары','Динамика'];
@@ -155,8 +156,15 @@ function chart(){
  return '<div class="panel"><div class="panelHead"><div><div class="panelTitle">Динамика жалоб</div><div class="panelSub">Все жалобы и повторные обращения</div></div></div><div class="panelBody"><div class="chart" onclick="tab=\'Динамика\';render()"><div class="gridLine" style="top:25%"></div><div class="gridLine" style="top:50%"></div><div class="gridLine" style="top:75%"></div><svg viewBox="0 0 700 240" preserveAspectRatio="none"><path d="M0 190 L100 155 L200 170 L300 112 L400 48 L500 130 L600 85 L700 102" fill="none" stroke="#2f6fe4" stroke-width="3"/><path d="M0 212 L100 205 L200 198 L300 184 L400 160 L500 178 L600 166 L700 172" fill="none" stroke="#9ab5ec" stroke-width="2"/></svg></div><div class="axis"><span>14.09</span><span>15.09</span><span>16.09</span><span>17.09</span><span>18.09</span><span>19.09</span><span>20.09</span><span>21.09</span></div></div></div>';
 }
 function reasons(){
- const rs=[['Испорченный продукт',52,13],['Переспелый / незрелый',17,4],['Срок годности',13,3],['Повреждение упаковки',9,2],['Другое',9,2]];
- return '<div class="panel"><div class="panelHead"><div><div class="panelTitle">Причины жалоб</div><div class="panelSub">Нажмите на причину, чтобы увидеть обращения</div></div></div><div class="panelBody">'+rs.map(r=>'<div class="reason" onclick="openReasonFilter(\''+r[0]+'\')"><span>'+r[0]+'</span><div class="bar"><i style="width:'+r[1]+'%"></i></div><b>'+r[2]+'</b></div>').join('')+'</div></div>';
+ const rs=[
+  ['Испорченный продукт','Испорченный продукт'],
+  ['Переспелый / незрелый','Переспелый / незрелый'],
+  ['Срок годности','Срок годности'],
+  ['Повреждение упаковки','Повреждение упаковки'],
+  ['Другое','Другое']
+ ];
+ const total=complaintsData.length;
+ return '<div class="panel"><div class="panelHead"><div><div class="panelTitle">Причины жалоб</div><div class="panelSub">Нажмите на причину, чтобы увидеть обращения</div></div></div><div class="panelBody">'+rs.map(r=>{const count=complaintsData.filter(p=>reasonMatches(p,r[1])).length;const share=Math.round(count/total*100);return '<div class="reason" onclick="openReasonFilter(\''+r[1]+'\')"><span>'+r[0]+'</span><div class="bar"><i style="width:'+share+'%"></i></div><b>'+count+'</b></div>'}).join('')+'</div></div>';
 }
 function reasonMatches(p,f){
  if(f==='Все причины')return true;
@@ -174,7 +182,7 @@ function openReasonFilter(reason){
 }
 function filteredComplaints(){
  const q=complaintQuery.trim().toLowerCase();
- return products.map((p,i)=>({p,i})).filter(x=>{
+ return complaintsData.map((p,i)=>({p,i})).filter(x=>{
   const p=x.p;
   const statusOk=complaintFilter==='Все'||(complaintFilter==='Требуют проверки'&&p.status==='Требует проверки')||(complaintFilter==='Открытые'&&p.status!=='Решено')||(complaintFilter==='Повторные'&&p.repeat);
   const reasonOk=reasonMatches(p,complaintReason);
@@ -184,7 +192,7 @@ function filteredComplaints(){
 function complaints(){
  const rows=filteredComplaints(),filters=['Все','Требуют проверки','Открытые','Повторные'];
  const reasonsList=['Все причины','Испорченный продукт','Переспелый / незрелый','Срок годности','Повреждение упаковки','Другое'];
- return '<div class="panel"><div class="panelHead"><div><div class="panelTitle">Жалобы по качеству</div><div class="panelSub">'+rows.length+' обращений · выберите строку, чтобы посмотреть детали</div></div><div class="toolbar">'+filters.map(f=>'<button class="segment '+(complaintFilter===f?'on':'')+'" onclick="complaintFilter=\''+f+'\';render()">'+f+'</button>').join('')+'<select class="filterSelect" onchange="complaintReason=this.value;render()">'+reasonsList.map(r=>'<option '+(complaintReason===r?'selected':'')+'>'+r+'</option>').join('')+'</select><input class="searchInput" placeholder="Товар, SKU, заказ или ID жалобы" value="'+complaintQuery.replace(/"/g,'&quot;')+'" onkeydown="if(event.key===\'Enter\'){complaintQuery=this.value;render()}" onblur="complaintQuery=this.value"></div></div><div class="tableWrap"><table class="tbl"><thead><tr><th>ТОВАР</th><th>ПРИЧИНА</th><th>ИСТОЧНИК</th><th>СТАТУС</th><th>ДАТА</th><th></th></tr></thead><tbody>'+rows.map(x=>{const p=x.p,i=x.i;return '<tr onclick="openDrawer('+i+')"><td><div class="productCell"><img class="pic" src="'+p.img+'"><div><div class="prodName">'+p.name+'</div><div class="meta"><span>'+p.sku+'</span><span>•</span><span>'+p.order+'</span>'+(p.repeat?'<span class="badge red">повтор</span>':'')+'</div></div></div></td><td>'+p.reason+'<div class="meta">'+p.scenario+'</div></td><td><a class="source" href="'+p.sourceUrl+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">'+p.sourceId+' ↗</a></td><td><span class="badge '+p.tone+'">'+p.status+'</span></td><td>'+p.when+'</td><td class="chev">›</td></tr>'}).join('')+(rows.length?'':'<tr><td colspan="6" class="empty">По выбранным фильтрам жалоб нет</td></tr>')+'</tbody></table></div></div>';
+ return '<div class="panel"><div class="panelHead"><div><div class="panelTitle">Жалобы по качеству</div><div class="panelSub">'+rows.length+' обращений · выберите строку, чтобы посмотреть детали</div></div><div class="toolbar">'+filters.map(f=>'<button class="segment '+(complaintFilter===f?'on':'')+'" onclick="complaintFilter=\''+f+'\';render()">'+f+'</button>').join('')+'<select class="filterSelect" onchange="complaintReason=this.value;render()">'+reasonsList.map(r=>'<option '+(complaintReason===r?'selected':'')+'>'+r+'</option>').join('')+'</select><input class="searchInput" placeholder="Товар, SKU, заказ или ID жалобы" value="'+complaintQuery.replace(/"/g,'&quot;')+'" onkeydown="if(event.key===\'Enter\'){complaintQuery=this.value;render()}" onblur="complaintQuery=this.value"></div></div><div class="tableWrap"><table class="tbl"><thead><tr><th>ТОВАР</th><th>ПРИЧИНА</th><th>ИСТОЧНИК</th><th>СТАТУС</th><th>ДАТА</th><th></th></tr></thead><tbody>'+rows.map(x=>{const p=x.p,i=x.i;return '<tr onclick="openDrawer('+i+',\'complaints\')"><td><div class="productCell"><img class="pic" src="'+p.img+'"><div><div class="prodName">'+p.name+'</div><div class="meta"><span>'+p.sku+'</span><span>•</span><span>'+p.order+'</span>'+(p.repeat?'<span class="badge red">повтор</span>':'')+'</div></div></div></td><td>'+p.reason+'<div class="meta">'+p.scenario+'</div></td><td><a class="source" href="'+p.sourceUrl+'" target="_blank" rel="noopener" onclick="event.stopPropagation()">'+p.sourceId+' ↗</a></td><td><span class="badge '+p.tone+'">'+p.status+'</span></td><td>'+p.when+'</td><td class="chev">›</td></tr>'}).join('')+(rows.length?'':'<tr><td colspan="6" class="empty">По выбранным фильтрам жалоб нет</td></tr>')+'</tbody></table></div></div>';
 }
 function filteredProducts(){
  const q=productQuery.trim().toLowerCase();
@@ -200,13 +208,13 @@ function productsView(){
 }
 function reasonsView(){
  const groups=[
-  {name:'Испорченный продукт',count:13,share:'52%',note:'Потенциально критичный сигнал',matches:['Испорченный продукт']},
-  {name:'Переспелый / незрелый',count:4,share:'17%',note:'Визуальная проверка',matches:['Переспелый продукт','Незрелый продукт']},
-  {name:'Срок годности',count:3,share:'13%',note:'Проверка срока и партии',matches:['Срок годности']},
-  {name:'Повреждение упаковки',count:2,share:'9%',note:'Проверка целостности',matches:['Повреждена упаковка']},
-  {name:'Другое',count:2,share:'9%',note:'Разбор по кейсу',matches:[]}
+  {name:'Испорченный продукт',note:'Потенциально критичный сигнал'},
+  {name:'Переспелый / незрелый',note:'Визуальная проверка'},
+  {name:'Срок годности',note:'Проверка срока и партии'},
+  {name:'Повреждение упаковки',note:'Проверка целостности'},
+  {name:'Другое',note:'Разбор по кейсу'}
  ];
- return '<div class="grid2"><div class="panel"><div class="panelHead"><div><div class="panelTitle">Причины жалоб</div><div class="panelSub">Нажмите на причину — откроются связанные обращения</div></div></div><div class="panelBody"><div class="reasonCards">'+groups.map(g=>{const examples=products.filter(p=>g.matches.includes(p.reason)).slice(0,3);return '<div class="reasonCard" onclick="openReasonFilter(\''+g.name+'\')"><div class="reasonCardTop"><div><b>'+g.name+'</b><div class="panelSub">'+g.note+'</div></div><div style="text-align:right"><div class="reasonCount">'+g.count+'</div><div class="panelSub">'+g.share+'</div></div></div><div class="reasonVisuals">'+(examples.length?examples.map(p=>'<img src="'+p.img+'" alt="">').join(''):'<div class="panelSub">Нет примеров в демо</div>')+'</div><div class="reasonFooter"><span class="panelSub">'+(examples.length?examples.map(p=>p.sourceId).join(' · '):'')+'</span><span class="reasonLink">Показать жалобы →</span></div></div>'}).join('')+'</div></div></div><div class="panel"><div class="panelHead"><div><div class="panelTitle">Как читать этот раздел</div><div class="panelSub">Быстрый разбор для директора Лавки</div></div></div><div class="panelBody"><div class="step"><span class="stepNo">1</span><div><b>Сначала причина</b><div class="panelSub">Сразу виден масштаб проблемы и примеры товаров.</div></div></div><div class="step"><span class="stepNo">2</span><div><b>Потом конкретные жалобы</b><div class="panelSub">Клик открывает список уже с нужным фильтром.</div></div></div><div class="step"><span class="stepNo">3</span><div><b>В карточке — весь контекст</b><div class="panelSub">Фото, комментарий, SKU, остаток и исходная жалоба.</div></div></div></div></div></div>';
+ return '<div class="grid2"><div class="panel"><div class="panelHead"><div><div class="panelTitle">Причины жалоб</div><div class="panelSub">Количество на плитке всегда равно количеству открываемых жалоб</div></div></div><div class="panelBody"><div class="reasonCards">'+groups.map(g=>{const matches=complaintsData.map((p,i)=>({p,i})).filter(x=>reasonMatches(x.p,g.name));const count=matches.length;const share=Math.round(count/complaintsData.length*100);const examples=matches.slice(0,3);return '<div class="reasonCard" onclick="openReasonFilter(\''+g.name+'\')"><div class="reasonCardTop"><div><b>'+g.name+'</b><div class="panelSub">'+g.note+'</div></div><div style="text-align:right"><div class="reasonCount">'+count+'</div><div class="panelSub">'+share+'%</div></div></div><div class="reasonVisuals">'+(examples.length?examples.map(x=>'<img src="'+x.p.img+'" alt="">').join(''):'<div class="panelSub">Нет обращений</div>')+'</div><div class="reasonFooter"><span class="panelSub">'+(examples.length?examples.map(x=>x.p.sourceId).join(' · '):'')+'</span><span class="reasonLink">Показать '+count+' жалоб →</span></div></div>'}).join('')+'</div></div></div><div class="panel"><div class="panelHead"><div><div class="panelTitle">Как читать этот раздел</div><div class="panelSub">Быстрый разбор для директора Лавки</div></div></div><div class="panelBody"><div class="step"><span class="stepNo">1</span><div><b>Сначала причина</b><div class="panelSub">Сразу виден масштаб проблемы и примеры товаров.</div></div></div><div class="step"><span class="stepNo">2</span><div><b>Потом конкретные жалобы</b><div class="panelSub">Клик открывает список уже с нужным фильтром.</div></div></div><div class="step"><span class="stepNo">3</span><div><b>В карточке — весь контекст</b><div class="panelSub">Фото, комментарий, SKU, остаток и исходная жалоба.</div></div></div></div></div></div>';
 }
 function dynamicsView(){
  const repeat=products.filter(p=>p.repeat).slice(0,4);
@@ -225,17 +233,19 @@ function render(){
  let body=tab==='Обзор'?overview():tab==='Жалобы'?complaints():tab==='Товары'?productsView():tab==='Причины'?reasonsView():tab==='Динамика'?dynamicsView():actionsView();
  page.innerHTML=tabs()+body;
 }
-function openDrawer(i){
- selected=i;const p=products[i];
- drawer.innerHTML='<div class="drawerHead"><div><div class="panelSub">'+p.sourceId+'</div><h2>'+p.name+'</h2><div class="meta">'+p.sku+' • '+p.order+'</div></div><button class="closeBtn" onclick="closeDrawer()">×</button></div><div class="drawerBody"><div style="display:flex;gap:7px;flex-wrap:wrap"><span class="badge '+p.tone+'">'+p.status+'</span>'+(p.repeat?'<span class="badge red">Повторная</span>':'')+'</div><div class="factGrid"><div class="fact"><span>Причина</span><b>'+p.reason+'</b></div><div class="fact"><span>Сценарий</span><b>'+p.scenario+'</b></div><div class="fact"><span>Остаток</span><b>'+p.stock+' шт.</b></div><div class="fact"><span>Ячейка</span><b>'+p.cell+'</b></div></div><div class="sectionLabel">Заказ</div><div class="orderPeople"><div class="personCard"><span>Сборщик</span><b>'+p.picker+'</b><div class="meta">Собрано в '+p.pickedAt+'</div></div><div class="personCard"><span>Курьер</span><b>'+p.courier+'</b><div class="meta">Доставлено в '+p.deliveredAt+'</div></div></div><div class="orderQuick"><button class="secondary" onclick="showOrderLogs('+i+')">Логи заказа</button><button class="secondary" onclick="showOrderInfo('+i+')">Детали заказа</button></div><div class="photoLabel">Фото из жалобы</div><img class="complaintPhoto" src="'+p.img+'"><div class="comment"><b>Комментарий покупателя</b><br>'+p.text+'</div><div class="panelSub" style="margin-top:12px">'+(p.hold?'Quality Hold применяется только к этому SKU до проверки.':'Автоматического Hold нет — нужна визуальная проверка конкретной позиции.')+'</div><div class="drawerActions"><button class="primary" onclick="closeDrawer();openCheck()">Проверить товар</button><a class="secondary" style="text-decoration:none;text-align:center" href="'+p.sourceUrl+'" target="_blank" rel="noopener">Открыть исходную жалобу ↗</a></div></div>';
+function openDrawer(i,source='products'){
+ const p=source==='complaints'?complaintsData[i]:products[i];
+ selected=p._productIndex!==undefined?p._productIndex:i;
+ currentDrawerItem=p;
+ drawer.innerHTML='<div class="drawerHead"><div><div class="panelSub">'+p.sourceId+'</div><h2>'+p.name+'</h2><div class="meta">'+p.sku+' • '+p.order+'</div></div><button class="closeBtn" onclick="closeDrawer()">×</button></div><div class="drawerBody"><div style="display:flex;gap:7px;flex-wrap:wrap"><span class="badge '+p.tone+'">'+p.status+'</span>'+(p.repeat?'<span class="badge red">Повторная</span>':'')+'</div><div class="factGrid"><div class="fact"><span>Причина</span><b>'+p.reason+'</b></div><div class="fact"><span>Сценарий</span><b>'+p.scenario+'</b></div><div class="fact"><span>Остаток</span><b>'+p.stock+' шт.</b></div><div class="fact"><span>Ячейка</span><b>'+p.cell+'</b></div></div><div class="sectionLabel">Заказ</div><div class="orderPeople"><div class="personCard"><span>Сборщик</span><b>'+p.picker+'</b><div class="meta">Собрано в '+p.pickedAt+'</div></div><div class="personCard"><span>Курьер</span><b>'+p.courier+'</b><div class="meta">Доставлено в '+p.deliveredAt+'</div></div></div><div class="orderQuick"><button class="secondary" onclick="showOrderLogs()">Логи заказа</button><button class="secondary" onclick="showOrderInfo()">Детали заказа</button></div><div class="photoLabel">Фото из жалобы</div><img class="complaintPhoto" src="'+p.img+'"><div class="comment"><b>Комментарий покупателя</b><br>'+p.text+'</div><div class="panelSub" style="margin-top:12px">'+(p.hold?'Quality Hold применяется только к этому SKU до проверки.':'Автоматического Hold нет — нужна визуальная проверка конкретной позиции.')+'</div><div class="drawerActions"><button class="primary" onclick="closeDrawer();openCheck()">Проверить товар</button><a class="secondary" style="text-decoration:none;text-align:center" href="'+p.sourceUrl+'" target="_blank" rel="noopener">Открыть исходную жалобу ↗</a></div></div>';
  drawerBg.classList.add('open');document.body.style.overflow='hidden';
 }
-function showOrderInfo(i){
- const p=products[i];
+function showOrderInfo(){
+ const p=currentDrawerItem||products[selected];
  showModal('Детали заказа '+p.order,'<div class="factGrid"><div class="fact"><span>Сборщик</span><b>'+p.picker+'</b></div><div class="fact"><span>Курьер</span><b>'+p.courier+'</b></div><div class="fact"><span>Собрано</span><b>'+p.pickedAt+'</b></div><div class="fact"><span>Доставлено</span><b>'+p.deliveredAt+'</b></div><div class="fact"><span>SKU</span><b>'+p.sku+'</b></div><div class="fact"><span>Ячейка</span><b>'+p.cell+'</b></div></div><div class="comment"><b>Контекст жалобы</b><br>'+p.reason+' · '+p.text+'</div>');
 }
-function showOrderLogs(i){
- const p=products[i];
+function showOrderLogs(){
+ const p=currentDrawerItem||products[selected];
  const logs=[
   ['17:41','Заказ создан','Заказ принят системой'],
   ['17:46','Передан в сборку','Назначен сборщик '+p.picker],
