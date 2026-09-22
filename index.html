@@ -135,7 +135,7 @@ const products=[
 {name:'Йогурт натуральный',sku:'SKU 551903',img:'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=700&q=85',reason:'Повреждена упаковка',complaints:1,status:'Решено',tone:'green',stock:14,order:'№ 248 115',when:'20.09 · 21:16',text:'Крышка была повреждена.',repeat:false,sourceId:'QUALITY-248115',sourceUrl:'https://tracker.yandex.ru/QUALITY-248115',priority:'Закрыто',scenario:'Разбор кейса',hold:false}
 ];
 
-let tab='Обзор',complaintFilter='Все',complaintReason='Все причины',complaintQuery='',productFilter='Все',productQuery='',selected=0,pickerTimer=null;
+let tab='Обзор',complaintFilter='Все',complaintReason='Все причины',complaintQuery='',productFilter='Все',productQuery='',selected=0;
 const page=document.getElementById('page'),drawerBg=document.getElementById('drawerBg'),drawer=document.getElementById('drawer'),modal=document.getElementById('modal'),modalBody=document.getElementById('modalBody');
 
 function tabs(){
@@ -241,7 +241,7 @@ function globalLookup(v){
 function showModal(title,body,actions){
  modal.style.display='flex';modalBody.innerHTML='<h2>'+title+'</h2>'+body+(actions||'<button class="primary" style="width:100%;margin-top:12px" onclick="closeModal()">Закрыть</button>');
 }
-function closeModal(){modal.style.display='none';if(pickerTimer){clearInterval(pickerTimer);pickerTimer=null}}
+function closeModal(){modal.style.display='none'}
 modal.onclick=e=>{if(e.target===modal)closeModal()};
 function openCheck(){
  const p=products[selected];
@@ -256,12 +256,6 @@ function moveBad(){
  showModal('Переместите товар','<div class="comment">Переместите <b>'+q+' шт.</b> в блок списания по действующему процессу.</div>','<button class="primary" style="width:100%" onclick="finishBad('+q+')">Перемещение выполнено</button>');
 }
 function finishBad(q){products[selected].status='Решено';products[selected].tone='green';showModal('Готово','<p>Результат проверки зафиксирован. '+q+' шт. перемещены в блок списания по существующему процессу. Quality Hub отдельно остаток не пересчитывает.</p>')}
-function showPickerCheck(){
- const p=products[selected]||products[0];if(pickerTimer){clearInterval(pickerTimer)}let left=7;
- showModal('Дополнительная проверка','<div class="panelSub">Заказ '+p.order+'</div><div class="productCell" style="margin-top:12px"><img class="pic" src="'+p.img+'"><div><div class="prodName">'+p.name+'</div><div class="meta">'+p.sku+'</div></div></div><div class="comment"><b>Проверьте дополнительно этот товар — по нему много жалоб</b></div><div id="pickerCountdown" class="kpiValue" style="text-align:center;margin:18px 0">7</div>','<button id="pickerConfirm" class="primary" style="width:100%;opacity:.45;cursor:not-allowed" disabled onclick="confirmPicker()">Подтвердить товар</button>');
- pickerTimer=setInterval(()=>{left--;const c=document.getElementById('pickerCountdown'),b=document.getElementById('pickerConfirm');if(c)c.textContent=left>0?left:'✓';if(left<=0){clearInterval(pickerTimer);pickerTimer=null;if(b){b.disabled=false;b.style.opacity='1';b.style.cursor='pointer'}}},1000);
-}
-function confirmPicker(){closeModal();showModal('Проверка подтверждена','<p>Сборщик подтвердил дополнительную проверку товара и возвращается к обычной сборке.</p>')}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'){closeDrawer();closeModal()}});
 render();
 </script>
