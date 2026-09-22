@@ -135,6 +135,62 @@ const products=[
 {name:'Йогурт натуральный',sku:'SKU 551903',img:'https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=700&q=85',reason:'Повреждена упаковка',complaints:1,status:'Решено',tone:'green',stock:14,order:'№ 248 115',when:'20.09 · 21:16',text:'Крышка была повреждена.',repeat:false,sourceId:'QUALITY-248115',sourceUrl:'https://tracker.yandex.ru/QUALITY-248115',priority:'Закрыто',scenario:'Разбор кейса',hold:false,picker:'Сергей М.',courier:'Олег Р.',pickedAt:'20:29',deliveredAt:'20:52',cell:'Х-21'}
 ];
 
+const complaintPlan=[
+ {pi:0,reason:'Испорченный продукт',count:4},
+ {pi:0,reason:'Переспелый продукт',count:2},
+ {pi:1,reason:'Срок годности',count:3},
+ {pi:2,reason:'Испорченный продукт',count:5},
+ {pi:3,reason:'Испорченный продукт',count:2},
+ {pi:3,reason:'Переспелый продукт',count:2},
+ {pi:4,reason:'Испорченный продукт',count:2},
+ {pi:4,reason:'Качество продукта',count:2},
+ {pi:5,reason:'Повреждена упаковка',count:2}
+];
+
+function complaintText(reason,name){
+ if(reason==='Испорченный продукт')return name+': товар выглядит испорченным, качество не соответствует ожиданиям.';
+ if(reason==='Переспелый продукт')return name+': товар слишком мягкий / переспелый, внешний вид не устроил клиента.';
+ if(reason==='Срок годности')return name+': клиент обратил внимание на слишком короткий остаточный срок годности.';
+ if(reason==='Повреждена упаковка')return name+': упаковка пришла повреждённой.';
+ return name+': клиент пожаловался на качество товара.';
+}
+function complaintStatus(seq){
+ const variants=[['Требует проверки','red'],['В работе','amber'],['Новая','blue'],['Решено','green']];
+ return variants[seq%variants.length];
+}
+function complaintTime(seq){
+ const day=21-Math.floor(seq/8);
+ const hour=18-(seq%8);
+ const mins=['42','17','54','37','08','46','21','03'][seq%8];
+ return String(day).padStart(2,'0')+'.09 · '+String(hour).padStart(2,'0')+':'+mins;
+}
+const complaintsData=[];
+let complaintSeq=0;
+complaintPlan.forEach(group=>{
+ for(let j=0;j<group.count;j++){
+  const base=products[group.pi];
+  const numericId=248391-complaintSeq*7;
+  const st=complaintStatus(complaintSeq);
+  complaintsData.push({
+   ...base,
+   _productIndex:group.pi,
+   reason:group.reason,
+   order:'№ '+numericId,
+   sourceId:'QUALITY-'+numericId,
+   sourceUrl:'https://tracker.yandex.ru/QUALITY-'+numericId,
+   when:complaintTime(complaintSeq),
+   text:complaintText(group.reason,base.name),
+   repeat:j>0,
+   status:st[0],
+   tone:st[1],
+   priority:st[0]==='Требует проверки'?'Срочно':st[0],
+   scenario:(group.reason==='Переспелый продукт'||group.reason==='Качество продукта')?'Визуальная проверка':'Срочная проверка'
+  });
+  complaintSeq++;
+ }
+});
+products.forEach((p,i)=>p.complaints=complaintsData.filter(c=>c._productIndex===i).length);
+
 let tab='Обзор',complaintFilter='Все',complaintReason='Все причины',complaintQuery='',productFilter='Все',productQuery='',selected=0;
 const page=document.getElementById('page'),drawerBg=document.getElementById('drawerBg'),drawer=document.getElementById('drawer'),modal=document.getElementById('modal'),modalBody=document.getElementById('modalBody');
 let currentDrawerItem=null;
